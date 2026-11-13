@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    // The family the signed-in user belongs to.
+    function myFamily() {
+      return get(/databases/$(db)/documents/users/$(request.auth.uid)).data.familyId;
+    }
+
+    // A user can only read/write their own profile, and can only point it at a
+    // family whose invite code they supply.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.familyId ==
+           get(/databases/$(db)/documents/invites/$(request.resource.data.joinCode)).data.familyId;
+    }
+
+    // Invite codes: look one up by exact code (no listing), create once, never edit.
+    match /invites/{code} {
+      allow get: if request.auth != null;
+      allow list: if false;
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Family data (baby name, entries, appointments): members only.
+    match /families/{fid} {
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow read, update: if request.auth != null && myFamily() == fid;
+      match /{sub}/{docId} {
+        allow read, write: if request.auth != null && myFamily() == fid;
+      }
+    }
+  }
+}

@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7a8bd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Baby Log">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Baby Log</title>
+<style>
+:root{
+  --bg:#fff7f9; --card:#ffffff; --ink:#3b2f35; --muted:#8c7b83; --line:#f1e1e7;
+  --pink:#f7a8bd; --feed:#ffb3c7; --diaper:#ffd98e; --sleep:#b9c8ff; --other:#c5e8c9;
+  --danger:#d9534f;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#1d1519; --card:#2a2025; --ink:#f3e8ec; --muted:#a59299; --line:#3a2d33;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 24px);max-width:560px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+h1{font-size:22px;margin:0}
+.iconbtn{background:none;border:0;font-size:22px;padding:8px;color:var(--ink)}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;text-align:center}
+.hero .big{font-size:34px;font-weight:700}
+.hero .sub{color:var(--muted);font-size:14px;margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 4px;text-align:center}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--muted)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.act{border:0;border-radius:18px;padding:18px 8px;font-size:17px;font-weight:600;color:#3b2f35}
+.act small{display:block;font-weight:400;font-size:12px;opacity:.75;margin-top:2px}
+.act:active{transform:scale(.97)}
+#banner{display:none;background:var(--card);border:2px solid var(--pink);border-radius:16px;padding:12px 14px;margin-bottom:12px;align-items:center;justify-content:space-between}
+#banner.on{display:flex}
+#banner .t{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+button.pill{border:0;border-radius:999px;padding:10px 18px;font-size:15px;font-weight:600;background:var(--pink);color:#3b2f35}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:20px 4px 8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:6px}
+.dot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:18px;flex:none}
+.row .main{flex:1;min-width:0}
+.row .main div{font-weight:600}
+.row .main span{font-size:13px;color:var(--muted)}
+.row .time{font-size:13px;color:var(--muted);flex:none}
+.empty{color:var(--muted);text-align:center;padding:24px}
+/* sheet */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:10}
+#overlay.on{display:flex}
+#sheet{background:var(--card);width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);max-height:90vh;overflow:auto}
+#sheet h3{margin:0 0 12px;font-size:19px}
+.opts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.opt{flex:1;min-width:80px;border:2px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:12px 6px;font-size:15px}
+.opt.sel{border-color:var(--pink);background:color-mix(in srgb,var(--pink) 25%,transparent);font-weight:600}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,textarea{width:100%;font-size:17px;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:inherit}
+.btns{display:flex;gap:8px;margin-top:16px}
+.btns button{flex:1;padding:14px}
+.danger{color:var(--danger)}
+.avatar{width:96px;height:96px;border-radius:50%;margin:0 auto 10px;border:3px solid var(--pink);background:var(--bg);display:grid;place-items:center;overflow:hidden;padding:0;color:var(--muted);font-size:26px}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar small{display:block;font-size:10px}
+#auth{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;overflow:auto;padding:calc(env(safe-area-inset-top) + 24px) 20px 24px}
+#auth.on{display:block}
+.authbox{max-width:420px;margin:6vh auto 0;text-align:center}
+.authbox label{text-align:left}
+.authbox .logo{font-size:56px}
+.authbox button.pill{width:100%;margin-top:12px;padding:14px}
+.muted{color:var(--muted);font-size:14px}
+.err{color:var(--danger);font-size:14px;min-height:20px;margin-top:8px}
+.or{color:var(--muted);margin-top:16px;font-size:13px}
+button.link{background:none;border:0;color:var(--muted);text-decoration:underline;margin-top:14px;font-size:14px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:12px}
+.tab{border:0;background:transparent;color:var(--muted);padding:10px;border-radius:10px;font-size:15px;font-weight:600}
+.tab.on{background:var(--pink);color:#3b2f35}
+.badge{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle;color:#3b2f35}
+.row.past{opacity:.55}
+.addbtn{width:100%;margin-bottom:6px;padding:14px;font-size:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">👶 Baby Log</h1>
+  <button class="iconbtn" id="gear" aria-label="Settings">⚙️</button>
+</header>
+
+<div class="tabs">
+  <button class="tab on" data-tab="log">🍼 Log</button>
+  <button class="tab" data-tab="appt">📅 Appointments</button>
+</div>
+
+<div id="logView">
+<div class="hero">
+  <button class="avatar" id="avatar" aria-label="Baby photo"></button>
+  <div class="big" id="since">—</div>
+  <div class="sub">since last feed</div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div id="banner"><div><div class="sub" id="bannerLabel" style="color:var(--muted);font-size:13px"></div><div class="t" id="bannerTime">0:00</div></div><button class="pill" id="stopBtn">Stop &amp; save</button></div>
+
+<div class="actions">
+  <button class="act" style="background:var(--feed)" data-k="feed">🍼 Feed<small>breast · bottle</small></button>
+  <button class="act" style="background:var(--diaper)" data-k="diaper">💩 Diaper<small>wet · dirty</small></button>
+  <button class="act" style="background:var(--sleep)" data-k="sleep">😴 Sleep<small>start timer</small></button>
+  <button class="act" style="background:var(--other)" data-k="other">📝 Other<small>pump · meds · note</small></button>
+</div>
+
+<div id="list"></div>
+</div>
+
+<div id="apptView" style="display:none">
+  <button class="pill addbtn" id="addAppt">＋ Add appointment</button>
+  <div id="apptList"></div>
+</div>
+
+<input type="file" accept="image/*" id="photoIn" hidden>
+<div id="auth"></div>
+<div id="overlay"><div id="sheet"></div></div>
+
+<script type="module">
+const $=s=>document.querySelector(s);
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+let entries=load('entries',[]), settings=load('settings',{name:'',unit:'oz'}), active=load('active',null), appts=load('appts',[]);
+const ML_PER_OZ=29.5735;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const persist=()=>{save('settings',settings);save('active',active);if(!cloud&&!cloudBroken){save('entries',entries);save('appts',appts)}};
+
+/* ---------- storage layer: single-phone (local) OR cloud (shared family) ---------- */
+var cloud=null, cloudBroken=false;
+try{
+  const {firebaseConfig:cfg}=await import('./firebase-config.js');
+  if(cfg&&cfg.apiKey&&!/^YOUR_/.test(cfg.apiKey)){
+    try{ cloud=(await import('./cloud.js')).createCloud(cfg); }catch(err){ console.warn(err); cloudBroken=true; }
+  }
+}catch(err){ console.warn(err); }
+if(cloud||cloudBroken){ entries=[]; appts=[]; }
+const fail=e=>alert('Could not save: '+friendly(e));
+const upsert=(arr,r)=>{const i=arr.findIndex(x=>x.id===r.id); if(i>=0)arr[i]=r; else arr.push(r)};
+const putEntry=r=>{ if(cloud)cloud.putEntry(r).catch(fail); else {upsert(entries,r);persist();render()} };
+const delEntry=id=>{ if(cloud)cloud.delEntry(id).catch(fail); else {entries=entries.filter(x=>x.id!==id);persist();render()} };
+const putAppt=r=>{ if(cloud)cloud.putAppt(r).catch(fail); else {upsert(appts,r);persist();render()} };
+const delAppt=id=>{ if(cloud)cloud.delAppt(id).catch(fail); else {appts=appts.filter(x=>x.id!==id);persist();render()} };
+const clearEntries=()=>{ if(cloud)cloud.clearEntries().catch(fail); else {entries=[];persist();render()} };
+
+/* ---------- baby photo ---------- */
+function resizePhoto(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const s=320,c=document.createElement('canvas');c.width=c.height=s;
+      const m=Math.min(img.width,img.height);
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);
+      URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.82));
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+function setPhoto(d){
+  settings.photo=d;persist();render();
+  if(cloud)cloud.setPhoto(d).catch(fail);
+}
+const toLocalInput=ms=>{const d=new Date(ms-new Date().getTimezoneOffset()*60000);return d.toISOString().slice(0,16)};
+const fmtTime=ms=>new Date(ms).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+const fmtDur=min=>{min=Math.round(min);const h=Math.floor(min/60),m=min%60;return h?`${h}h ${m}m`:`${m}m`};
+const fmtAmt=ml=>settings.unit==='oz'?`${(ml/ML_PER_OZ).toFixed(1).replace(/\.0$/,'')} oz`:`${Math.round(ml)} ml`;
+const startOfDay=ms=>{const d=new Date(ms);d.setHours(0,0,0,0);return d.getTime()};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const META={
+  feed:{icon:'🍼',color:'var(--feed)'},
+  diaper:{icon:'💩',color:'var(--diaper)'},
+  sleep:{icon:'😴',color:'var(--sleep)'},
+  other:{icon:'📝',color:'var(--other)'}
+};
+const SUBLABEL={L:'Breast – left',R:'Breast – right',bottle:'Bottle',wet:'Wet',dirty:'Dirty',both:'Wet + dirty',pump:'Pumped',med:'Medication',note:'Note',sleep:'Sleep'};
+
+function describe(e){
+  let main=SUBLABEL[e.sub]||e.sub, det=[];
+  if(e.amt) det.push(fmtAmt(e.amt));
+  if(e.dur) det.push(fmtDur(e.dur));
+  if(e.note) det.push(e.note);
+  return {main,det:det.join(' · ')};
+}
+
+function render(){
+  $('#title').textContent=`👶 ${settings.name||'Baby'} Log`;
+  $('#avatar').innerHTML=settings.photo?`<img alt="Baby photo" src="${settings.photo}">`:'<span>📷<small>Add photo</small></span>';
+  const today=entries.filter(e=>e.t>=startOfDay(Date.now()));
+  const feeds=today.filter(e=>e.kind==='feed');
+  const bottleMl=feeds.reduce((s,e)=>s+(e.sub==='bottle'?e.amt||0:0),0);
+  const diapers=today.filter(e=>e.kind==='diaper').length;
+  const sleepMin=today.filter(e=>e.kind==='sleep').reduce((s,e)=>s+(e.dur||0),0);
+  $('#stats').innerHTML=[
+    [feeds.length,'feeds'],[bottleMl?fmtAmt(bottleMl):'—','bottle'],[diapers,'diapers'],[sleepMin?fmtDur(sleepMin):'—','sleep']
+  ].map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l} today</span></div>`).join('');
+  updateSince();
+  updateBanner();
+  renderAppts();
+  // list
+  if(!entries.length){$('#list').innerHTML='<div class="empty">Nothing logged yet.<br>Tap a button above to add the first entry.</div>';return}
+  const sorted=[...entries].sort((a,b)=>b.t-a.t);
+  let html='',lastDay='';
+  for(const e of sorted){
+    const day=new Date(e.t).toLocaleDateString([], {weekday:'long',month:'short',day:'numeric'});
+    if(day!==lastDay){html+=`<h2>${day}</h2>`;lastDay=day}
+    const d=describe(e),m=META[e.kind];
+    html+=`<div class="row" data-id="${e.id}"><div class="dot" style="background:${m.color}">${m.icon}</div><div class="main"><div>${esc(d.main)}</div>${d.det?`<span>${esc(d.det)}</span>`:''}</div><div class="time">${fmtTime(e.t)}</div></div>`;
+  }
+  $('#list').innerHTML=html;
+}
+
+function updateSince(){
+  const last=entries.filter(e=>e.kind==='feed').sort((a,b)=>b.t-a.t)[0];
+  if(!last){$('#since').textContent='—';return}
+  const min=Math.max(0,(Date.now()-last.t)/60000);
+  $('#since').textContent=fmtDur(min);
+}
+function updateBanner(){
+  const b=$('#banner');
+  if(!active){b.classList.remove('on');return}
+  b.classList.add('on');
+  $('#bannerLabel').textContent=active.kind==='sleep'?'Sleeping…':`Feeding – ${SUBLABEL[active.sub]}`;
+  const s=Math.floor((Date.now()-active.start)/1000);
+  const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;
+  $('#bannerTime').textContent=(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(sec).padStart(2,'0');
+}
+setInterval(()=>{updateBanner();},1000);
+setInterval(updateSince,30000);
+
+/* ---------- sheet ---------- */
+const sheet=$('#sheet'),overlay=$('#overlay');
+const close=()=>overlay.classList.remove('on');
+overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+
+function openSheet(html){sheet.innerHTML=html;overlay.classList.add('on')}
+function optsHtml(name,items,sel){
+  return `<div class="opts" data-name="${name}">`+items.map(([v,l])=>`<button class="opt ${v===sel?'sel':''}" data-v="${v}">${l}</button>`).join('')+'</div>';
+}
+sheet.addEventListener('click',e=>{
+  const o=e.target.closest('.opt');
+  if(o){o.parentElement.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel');o.parentElement.dispatchEvent(new Event('change'))}
+});
+const picked=name=>sheet.querySelector(`[data-name="${name}"] .sel`)?.dataset.v;
+
+function openForm(kind,existing){
+  const e=existing||{t:Date.now()};
+  const timeField=`<label>When</label><input type="datetime-local" id="f_time" value="${toLocalInput(e.t)}">`;
+  const noteField=`<label>Note (optional)</label><input id="f_note" placeholder="e.g. spit up a bit" value="${esc(e.note||'')}">`;
+  const del=existing?`<button class="pill ghost danger" id="f_del">Delete</button>`:'';
+  const buttons=`<div class="btns">${del}<button class="pill ghost" id="f_cancel">Cancel</button><button class="pill" id="f_save">Save</button></div>`;
+  let body='';
+  const unitLbl=settings.unit;
+  const amtVal=e.amt?(settings.unit==='oz'?(e.amt/ML_PER_OZ).toFixed(1):Math.round(e.amt)):'';
+  if(kind==='feed'){
+    const sub=e.sub||'L';
+    body=`<h3>🍼 Feed</h3>${optsHtml('sub',[['L','Left'],['R','Right'],['bottle','Bottle']],sub)}
+    <div id="amtWrap" style="display:${sub==='bottle'?'block':'none'}"><label>Amount (${unitLbl})</label><input type="number" inputmode="decimal" step="0.1" id="f_amt" value="${amtVal}"></div>
+    <div id="durWrap" style="display:${sub==='bottle'?'none':'block'}"><label>Minutes (leave blank to use the timer instead)</label><input type="number" inputmode="numeric" id="f_dur" value="${e.dur||''}"></div>
+    ${timeField}${noteField}`;
+  } else if(kind==='diaper'){
+    body=`<h3>💩 Diaper</h3>${optsHtml('sub',[['wet','Wet'],['dirty','Dirty'],['both','Both']],e.sub||'wet')}${timeField}${noteField}`;
+  } else if(kind==='sleep'){
+    body=`<h3>😴 Sleep</h3><label>Minutes slept (blank = start a timer now)</label><input type="number" inputmode="numeric" id="f_dur" value="${e.dur||''}">${timeField}${noteField}`;
+  } else {
+    const sub=e.sub||'pump';
+    body=`<h3>📝 Other</h3>${optsHtml('sub',[['pump','Pumped'],['med','Medication'],['note','Note']],sub)}
+    <div id="amtWrap" style="display:${sub==='pump'?'block':'none'}"><label>Amount pumped (${unitLbl})</label><input type="number" inputmode="decimal" step="0.1" id="f_amt" value="${amtVal}"></div>${timeField}${noteField}`;
+  }
+  openSheet(body+buttons);
+  const subEl=sheet.querySelector('[data-name="sub"]');
+  if(subEl) subEl.addEventListener('change',()=>{
+    const s=picked('sub');
+    if(kind==='feed'){ $('#amtWrap').style.display=s==='bottle'?'block':'none'; $('#durWrap').style.display=s==='bottle'?'none':'block'; }
+    if(kind==='other'){ $('#amtWrap').style.display=s==='pump'?'block':'none'; }
+  });
+  $('#f_cancel').onclick=close;
+  if(existing) $('#f_del').onclick=()=>{ if(confirm('Delete this entry?')){delEntry(existing.id);close()} };
+  $('#f_save').onclick=()=>{
+    const t=new Date($('#f_time').value).getTime()||Date.now();
+    const sub=kind==='sleep'?'sleep':picked('sub');
+    const note=$('#f_note').value.trim();
+    const amtRaw=parseFloat($('#f_amt')?.value);
+    const amt=amtRaw?(settings.unit==='oz'?amtRaw*ML_PER_OZ:amtRaw):0;
+    const dur=parseFloat($('#f_dur')?.value)||0;
+    // No duration for breast/sleep on a NEW entry -> start a timer
+    if(!existing && !dur && ((kind==='feed'&&sub!=='bottle')||kind==='sleep')){
+      active={kind,sub,start:t,note};persist();close();render();return;
+    }
+    const rec={id:existing?.id||uid(),t,kind,sub,note};
+    if(amt&&(sub==='bottle'||sub==='pump')) rec.amt=amt;
+    if(dur) rec.dur=dur;
+    putEntry(rec);close();
+  };
+}
+
+document.querySelectorAll('.act').forEach(b=>b.onclick=()=>{
+  if(active&&(b.dataset.k==='sleep'||b.dataset.k==='feed')&&!confirm('A timer is already running. Open a new entry anyway?'))return;
+  openForm(b.dataset.k);
+});
+$('#list').addEventListener('click',e=>{
+  const r=e.target.closest('.row');if(!r)return;
+  const ent=entries.find(x=>x.id===r.dataset.id);if(ent)openForm(ent.kind,ent);
+});
+$('#stopBtn').onclick=()=>{
+  if(!active)return;
+  const dur=Math.max(1,Math.round((Date.now()-active.start)/60000));
+  putEntry({id:uid(),t:active.start,kind:active.kind,sub:active.sub,dur,note:active.note||''});
+  active=null;persist();render();
+};
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+  $('#logView').style.display=b.dataset.tab==='log'?'block':'none';
+  $('#apptView').style.display=b.dataset.tab==='appt'?'block':'none';
+});
+
+/* ---------- appointments ---------- */
+const WHO={baby:{label:'Baby',color:'var(--feed)',icon:'👶'},mom:{label:'Me',color:'var(--sleep)',icon:'🤱'}};
+const fmtDateTime=ms=>new Date(ms).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function relDay(ms){
+  const days=Math.round((startOfDay(ms)-startOfDay(Date.now()))/86400000);
+  return days===0?'Today':days===1?'Tomorrow':days>1?`In ${days} days`:days===-1?'Yesterday':`${-days} days ago`;
+}
+function renderAppts(){
+  if(!appts.length){$('#apptList').innerHTML='<div class="empty">No appointments yet.<br>Add your next check-up, pediatrician visit or vaccination.</div>';return}
+  const now=Date.now()-3600000;
+  const up=appts.filter(a=>a.t>=now&&!a.done).sort((a,b)=>a.t-b.t);
+  const past=appts.filter(a=>!(a.t>=now&&!a.done)).sort((a,b)=>b.t-a.t);
+  const row=(a,isPast)=>{
+    const w=WHO[a.who]||WHO.baby;
+    return `<div class="row ${isPast?'past':''}" data-id="${a.id}"><div class="dot" style="background:${w.color}">${w.icon}</div><div class="main"><div>${a.done?'✓ ':''}${esc(a.title)}<span class="badge" style="background:${w.color}">${w.label}</span></div><span>${fmtDateTime(a.t)}${a.place?' · '+esc(a.place):''}</span></div><div class="time">${relDay(a.t)}</div></div>`;
+  };
+  $('#apptList').innerHTML=(up.length?'<h2>Upcoming</h2>'+up.map(a=>row(a,false)).join(''):'')+(past.length?'<h2>Past / done</h2>'+past.map(a=>row(a,true)).join(''):'');
+}
+function openAppt(ex){
+  const a=ex||{t:Date.now()+86400000,who:'baby'};
+  openSheet(`<h3>📅 ${ex?'Edit':'New'} appointment</h3>
+  ${optsHtml('who',[['baby','👶 Baby'],['mom','🤱 Me']],a.who)}
+  <label>What</label><input id="a_title" placeholder="e.g. 2-month check-up, OB postpartum visit" value="${esc(a.title||'')}">
+  <label>When</label><input type="datetime-local" id="a_time" value="${toLocalInput(a.t)}">
+  <label>Where / who (optional)</label><input id="a_place" placeholder="Clinic or doctor" value="${esc(a.place||'')}">
+  <label>Notes / questions to ask (optional)</label><textarea id="a_notes" rows="3">${esc(a.notes||'')}</textarea>
+  <div class="opts" style="margin-top:12px">${ex?`<button class="opt" id="a_done">${a.done?'Mark not done':'✓ Mark done'}</button><button class="opt" id="a_ics">📆 Add to calendar</button>`:''}</div>
+  <div class="btns">${ex?'<button class="pill ghost danger" id="a_del">Delete</button>':''}<button class="pill ghost" id="a_cancel">Cancel</button><button class="pill" id="a_save">Save</button></div>`);
+  $('#a_cancel').onclick=close;
+  const collect=()=>({id:ex?.id||uid(),who:picked('who')||'baby',title:$('#a_title').value.trim(),t:new Date($('#a_time').value).getTime()||Date.now(),place:$('#a_place').value.trim(),notes:$('#a_notes').value.trim(),done:ex?.done||false});
+  $('#a_save').onclick=()=>{
+    const rec=collect();
+    if(!rec.title){$('#a_title').focus();return}
+    putAppt(rec);close();
+  };
+  if(ex){
+    $('#a_del').onclick=()=>{if(confirm('Delete this appointment?')){delAppt(ex.id);close()}};
+    $('#a_done').onclick=()=>{putAppt({...ex,done:!ex.done});close()};
+    $('#a_ics').onclick=()=>{
+      const r=collect();
+      const f=ms=>new Date(ms).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+      const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//BabyLog//EN','BEGIN:VEVENT',`UID:${r.id}@babylog`,`DTSTAMP:${f(Date.now())}`,`DTSTART:${f(r.t)}`,`DTEND:${f(r.t+3600000)}`,
+        `SUMMARY:${(WHO[r.who]?.label==='Baby'?'Baby: ':'')+r.title}`,`LOCATION:${r.place}`,`DESCRIPTION:${r.notes.replace(/\n/g,'\\n')}`,
+        'BEGIN:VALARM','TRIGGER:-PT1H','ACTION:DISPLAY','DESCRIPTION:Appointment soon','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+      download('appointment.ics',ics,'text/calendar');
+    };
+  }
+}
+$('#addAppt').onclick=()=>openAppt();
+$('#apptList').addEventListener('click',e=>{
+  const r=e.target.closest('.row');if(!r)return;
+  const a=appts.find(x=>x.id===r.dataset.id);if(a)openAppt(a);
+});
+
+/* ---------- settings ---------- */
+$('#gear').onclick=()=>{
+  openSheet(`<h3>⚙️ Settings</h3>
+  <label>Baby's name</label><input id="s_name" value="${esc(settings.name)}" placeholder="Baby">
+  <label>Bottle units</label>${optsHtml('unit',[['oz','oz'],['ml','ml']],settings.unit)}
+  <label>Baby photo</label>
+  <div class="opts"><button class="opt" id="s_photo">Change photo</button><button class="opt" id="s_nophoto">Remove</button></div>
+  ${cloud?`<label>Signed in as</label><div style="font-size:15px;margin-bottom:6px">${esc(cloud.email)}</div>
+  <label>Family invite code (share with your partner)</label>
+  <div class="opts"><button class="opt" id="s_code" style="font-size:18px;letter-spacing:.12em;font-weight:700">${esc(cloud.code||'…')}</button></div>
+  <div class="opts"><button class="opt" id="s_out">Sign out</button></div>`:''}
+  <label>Your data</label>
+  <div class="opts"><button class="opt" id="s_csv">Export CSV</button><button class="opt" id="s_json">Backup (JSON)</button></div>
+  <div class="opts"><button class="opt danger" id="s_clear">Delete all entries</button></div>
+  <div class="btns"><button class="pill ghost" id="s_cancel">Close</button><button class="pill" id="s_save">Save</button></div>
+  <p style="color:var(--muted);font-size:12px">All entries are stored only on this phone. Use Export now and then as a backup.</p>`);
+  $('#s_cancel').onclick=close;
+  $('#s_photo').onclick=()=>{close();$('#photoIn').click()};
+  $('#s_nophoto').onclick=()=>{setPhoto('');close()};
+  if(cloud){
+    $('#s_code').onclick=async()=>{try{await navigator.clipboard.writeText(cloud.code);$('#s_code').textContent='Copied ✓'}catch{}};
+    $('#s_out').onclick=async()=>{close();await cloud.signOut()};
+  }
+  $('#s_save').onclick=()=>{settings.name=$('#s_name').value.trim();settings.unit=picked('unit')||'oz';persist();if(cloud)cloud.setBabyName(settings.name).catch(fail);close();render()};
+  $('#s_csv').onclick=()=>{
+    const rows=[['when','type','detail','amount_ml','minutes','note']];
+    [...entries].sort((a,b)=>a.t-b.t).forEach(e=>rows.push([new Date(e.t).toLocaleString(),e.kind,SUBLABEL[e.sub]||e.sub,e.amt?Math.round(e.amt):'',e.dur||'',e.note||'']));
+    download('baby-log.csv',rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');
+  };
+  $('#s_json').onclick=()=>download('baby-log-backup.json',JSON.stringify({entries,appts,settings}),'application/json');
+  $('#s_clear').onclick=()=>{ if(confirm('Delete ALL feed/diaper/sleep entries? (Appointments are kept.) This cannot be undone.')){clearEntries();active=null;persist();close()} };
+};
+function download(name,text,type){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();
+}
+
+/* ---------- photo picker wiring ---------- */
+$('#avatar').onclick=()=>$('#photoIn').click();
+$('#photoIn').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{setPhoto(await resizePhoto(f))}catch{alert('Could not read that photo.')}
+});
+
+/* ---------- accounts (only when firebase-config.js is filled in) ---------- */
+const FRIENDLY={
+  'auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.','auth/user-not-found':'Wrong email or password.',
+  'auth/invalid-email':'That email address looks wrong.','auth/email-already-in-use':'An account with that email already exists. Try signing in.',
+  'auth/weak-password':'Password must be at least 6 characters.','auth/network-request-failed':'No internet connection.',
+  'auth/too-many-requests':'Too many attempts. Wait a minute and try again.','invalid-code':'That invite code was not found.',
+  'permission-denied':'Permission denied. Check that the Firestore rules were published.'
+};
+function friendly(e){return FRIENDLY[e?.code]||FRIENDLY[e?.message]||e?.message||'Something went wrong.'}
+let authSignup=false;
+function hideAuth(){const a=$('#auth');a.classList.remove('on');a.innerHTML=''}
+function showAuth(mode,msg=''){
+  const a=$('#auth');a.classList.add('on');
+  const err=`<div class="err" id="x_err">${esc(msg)}</div>`;
+  const setErr=t=>{$('#x_err').textContent=t};
+  if(mode==='loading'){a.innerHTML='<div class="authbox"><div class="logo">👶</div><p class="muted">Loading…</p></div>';return}
+  if(mode==='broken'){a.innerHTML='<div class="authbox"><div class="logo">📡</div><h1>Can’t reach sign-in</h1><p class="muted">Connect to the internet and reopen the app.</p></div>';return}
+  if(mode==='family'){
+    a.innerHTML=`<div class="authbox"><div class="logo">👶</div><h1>Set up your family log</h1>
+    <p class="muted">Start a new log for your baby, or join your partner’s with their invite code.</p>
+    <label>Baby’s name (optional)</label><input id="x_baby" autocomplete="off">
+    <button class="pill" id="x_create">Create family log</button>
+    <div class="or">or</div>
+    <label>Invite code</label><input id="x_code" autocapitalize="characters" autocomplete="off" placeholder="8-character code">
+    <button class="pill ghost" id="x_join">Join with code</button>${err}
+    <button class="link" id="x_out">Sign out</button></div>`;
+    const run=(btn,fn)=>async()=>{btn.disabled=true;setErr('');try{await fn()}catch(er){setErr(friendly(er));btn.disabled=false}};
+    $('#x_create').onclick=run($('#x_create'),()=>cloud.createFamily($('#x_baby').value.trim()));
+    $('#x_join').onclick=run($('#x_join'),()=>cloud.joinFamily($('#x_code').value));
+    $('#x_out').onclick=()=>cloud.signOut();
+    return;
+  }
+  const su=authSignup;
+  a.innerHTML=`<form class="authbox" id="x_form"><div class="logo">👶</div><h1>Baby Log</h1>
+  <p class="muted">${su?'Create your account':'Sign in to see your family’s log'}</p>
+  <label>Email</label><input id="x_email" type="email" autocomplete="email" inputmode="email" required>
+  <label>Password</label><input id="x_pw" type="password" autocomplete="${su?'new-password':'current-password'}" required minlength="6">
+  ${err}
+  <button class="pill" id="x_go" type="submit">${su?'Create account':'Sign in'}</button>
+  <button class="link" type="button" id="x_toggle">${su?'I already have an account':'New here? Create an account'}</button>
+  ${su?'':'<button class="link" type="button" id="x_reset">Forgot password?</button>'}</form>`;
+  $('#x_toggle').onclick=()=>{authSignup=!su;showAuth('signin')};
+  if(!su)$('#x_reset').onclick=async()=>{
+    const em=$('#x_email').value.trim();if(!em){setErr('Enter your email above first.');return}
+    try{await cloud.reset(em);setErr('Password reset email sent. Check your inbox.')}catch(er){setErr(friendly(er))}
+  };
+  $('#x_form').onsubmit=async ev=>{
+    ev.preventDefault();const b=$('#x_go');b.disabled=true;setErr('');
+    try{const em=$('#x_email').value.trim(),pw=$('#x_pw').value;await (su?cloud.signUp(em,pw):cloud.signIn(em,pw))}
+    catch(er){setErr(friendly(er));b.disabled=false}
+  };
+}
+function startSession(){
+  hideAuth();
+  cloud.subscribe({
+    onFamily:f=>{settings.name=f.babyName||'';settings.photo=f.photo||'';save('settings',settings);render()},
+    onEntries:a=>{entries=a;render()},
+    onAppts:a=>{appts=a;render()},
+    onError:e=>console.warn(e)
+  });
+}
+if(cloudBroken){showAuth('broken')}
+else if(cloud){
+  showAuth('loading');
+  cloud.onAuth(({user,familyId})=>{
+    if(!user){entries=[];appts=[];active=null;render();showAuth('signin')}
+    else if(!familyId){showAuth('family')}
+    else startSession();
+  });
+}
+
+render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
