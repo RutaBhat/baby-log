@@ -75,6 +75,7 @@ input,textarea{width:100%;font-size:17px;padding:11px;border-radius:12px;border:
 .muted{color:var(--muted);font-size:14px}
 .err{color:var(--danger);font-size:14px;min-height:20px;margin-top:8px}
 .or{color:var(--muted);margin-top:16px;font-size:13px}
+.credit{color:var(--muted);font-size:13px;margin-top:32px}
 button.link{background:none;border:0;color:var(--muted);text-decoration:underline;margin-top:14px;font-size:14px}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:12px}
 .tab{border:0;background:transparent;color:var(--muted);padding:10px;border-radius:10px;font-size:15px;font-weight:600}
@@ -461,7 +462,8 @@ function showAuth(mode,msg=''){
   ${err}
   <button class="pill" id="x_go" type="submit">${su?'Create account':'Sign in'}</button>
   <button class="link" type="button" id="x_toggle">${su?'I already have an account':'New here? Create an account'}</button>
-  ${su?'':'<button class="link" type="button" id="x_reset">Forgot password?</button>'}</form>`;
+  ${su?'':'<button class="link" type="button" id="x_reset">Forgot password?</button>'}
+  <p class="credit">Created by Ruta Bhat</p></form>`;
   $('#x_toggle').onclick=()=>{authSignup=!su;showAuth('signin')};
   if(!su)$('#x_reset').onclick=async()=>{
     const em=$('#x_email').value.trim();if(!em){setErr('Enter your email above first.');return}
