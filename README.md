@@ -4,6 +4,17 @@ A shared newborn tracker for feeds, diapers, sleep and appointments. It installs
 
 I built it during my maternity leave because I needed it myself. It's a small product case study as much as a code project: one real user, a real constraint (tired parents, one hand free, often no signal), and a few deliberate tradeoffs.
 
+**Live app:** [babymoni.netlify.app](https://babymoni.netlify.app) (create a free account to try it)
+
+## Screenshots
+<p>
+  <img src="screenshots/1-home.jpg" alt="Home screen with time since last feed, today's totals and quick-log buttons" width="260">
+  <img src="screenshots/2-appointments.jpg" alt="Appointments tab with upcoming and past visits for baby and parent" width="260">
+  <img src="screenshots/3-log-a-feed.jpg" alt="Logging a bottle feed" width="260">
+</p>
+
+*Screenshots use sample data.*
+
 ## The problem
 In the first weeks, both parents need to answer the same questions at 3 a.m.: *When was the last feed? Which side? Did anyone change a diaper? When is the next check-up?* Texting each other or using a notes app breaks down fast, and many tracker apps are ad-heavy, locked behind subscriptions, or can't be shared easily.
 
@@ -13,6 +24,7 @@ In the first weeks, both parents need to answer the same questions at 3 a.m.: *W
 - **"Time since last feed"** as the largest thing on the screen, plus today's totals
 - **Appointments** for baby and parent, with notes, mark-as-done, and "Add to calendar" (with a reminder)
 - **Shared family log:** each parent has their own login; one creates the family and shares an 8-character invite code, and everyone who joins sees the same data, live
+- **Join a different family:** if someone ends up in the wrong family log, they can switch with a code from Settings and optionally bring their existing entries along
 - **Baby photo** on the home screen
 - **Works offline** and syncs when the connection returns
 - **Export:** CSV and JSON backup
@@ -27,6 +39,11 @@ In the first weeks, both parents need to answer the same questions at 3 a.m.: *W
 | Local-only mode when no backend is configured | Anyone can try it with zero setup; the cloud features are opt-in |
 | Big tap targets, minimal typing | Designed for one-handed use while holding a baby |
 | Data export | Parents own their data and can leave at any time |
+
+## What I learned from using it
+- **A flow I thought was clear wasn't.** When my husband first signed in, he tapped "Create family log" instead of entering my invite code, so we each had our own empty log and couldn't see each other's entries. The first-run screen put the two choices side by side with equal weight. I added a "Join a different family" option (with an option to carry entries over) so a wrong tap is recoverable. The follow-up I'd test next is making the choice clearer on the first screen.
+- **Updates need a plan, not just a deploy.** An early cache setting meant installed copies kept showing the old version. I switched the app to fetch fresh files first and fall back to the cache only when offline.
+- **Scope grew from real asks:** appointments, shared logins and the baby photo each came from a need I hit while using it, not from a feature list.
 
 ## Tech
 - Plain HTML, CSS and JavaScript (no framework or build step)
@@ -47,7 +64,7 @@ Data is stored in the Firebase project of whoever deploys the app. With the incl
 - Vaccination schedule with reminders
 - Pattern insights (average gap between feeds, longest sleep stretch)
 - Push notifications for upcoming appointments
-- Remove-member and leave-family controls
+- Remove-member controls and a clearer first-run choice between "create" and "join"
 - Shared running timers across both phones
 
 ## How it was built
