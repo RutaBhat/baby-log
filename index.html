@@ -389,6 +389,10 @@ $('#gear').onclick=()=>{
   ${cloud?`<label>Signed in as</label><div style="font-size:15px;margin-bottom:6px">${esc(cloud.email)}</div>
   <label>Family invite code (share with your partner)</label>
   <div class="opts"><button class="opt" id="s_code" style="font-size:18px;letter-spacing:.12em;font-weight:700">${esc(cloud.code||'…')}</button></div>
+  <label>Join a different family (e.g. your partner's code)</label>
+  <input id="s_jcode" placeholder="Invite code" autocapitalize="characters" autocomplete="off">
+  <label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="s_bring" checked style="width:auto"> Bring my existing entries along</label>
+  <div class="opts" style="margin-top:8px"><button class="opt" id="s_join">Join this family</button></div>
   <div class="opts"><button class="opt" id="s_out">Sign out</button></div>`:''}
   <label>Your data</label>
   <div class="opts"><button class="opt" id="s_csv">Export CSV</button><button class="opt" id="s_json">Backup (JSON)</button></div>
@@ -401,6 +405,14 @@ $('#gear').onclick=()=>{
   if(cloud){
     $('#s_code').onclick=async()=>{try{await navigator.clipboard.writeText(cloud.code);$('#s_code').textContent='Copied ✓'}catch{}};
     $('#s_out').onclick=async()=>{close();await cloud.signOut()};
+    $('#s_join').onclick=async()=>{
+      const code=$('#s_jcode').value;
+      if(!code.trim()){$('#s_jcode').focus();return}
+      if(!confirm('Switch to that family? You will then see that family’s log instead of this one.'))return;
+      const btn=$('#s_join');btn.disabled=true;btn.textContent='Joining…';
+      try{await cloud.switchFamily(code,$('#s_bring').checked);close()}
+      catch(er){alert(friendly(er));btn.disabled=false;btn.textContent='Join this family'}
+    };
   }
   $('#s_save').onclick=()=>{settings.name=$('#s_name').value.trim();settings.unit=picked('unit')||'oz';persist();if(cloud)cloud.setBabyName(settings.name).catch(fail);close();render()};
   $('#s_csv').onclick=()=>{
@@ -427,7 +439,7 @@ const FRIENDLY={
   'auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.','auth/user-not-found':'Wrong email or password.',
   'auth/invalid-email':'That email address looks wrong.','auth/email-already-in-use':'An account with that email already exists. Try signing in.',
   'auth/weak-password':'Password must be at least 6 characters.','auth/network-request-failed':'No internet connection.',
-  'auth/too-many-requests':'Too many attempts. Wait a minute and try again.','invalid-code':'That invite code was not found.',
+  'auth/too-many-requests':'Too many attempts. Wait a minute and try again.','invalid-code':'That invite code was not found.','same-family':'You are already in that family.',
   'permission-denied':'Permission denied. Check that the Firestore rules were published.'
 };
 function friendly(e){return FRIENDLY[e?.code]||FRIENDLY[e?.message]||e?.message||'Something went wrong.'}

@@ -74,6 +74,32 @@ export function createCloud(cfg) {
       fid = id; hint.set(u.uid, fid); notify();
     },
 
+    // Move this user into another family (via its invite code), optionally copying their existing entries over.
+    async switchFamily(rawCode, bring) {
+      const u = auth.currentUser;
+      const code = String(rawCode || '').trim().toUpperCase();
+      if (!code) throw new Error('invalid-code');
+      const inv = await getDoc(doc(db, 'invites', code));
+      if (!inv.exists()) throw new Error('invalid-code');
+      const newId = inv.data().familyId;
+      if (newId === fid) throw new Error('same-family');
+      // Read the old family's data while we are still a member of it.
+      let carry = [];
+      if (bring && fid) {
+        const [e, a] = await Promise.all([getDocs(col('entries')), getDocs(col('appts'))]);
+        carry = [...e.docs.map(d => ['entries', d.data()]), ...a.docs.map(d => ['appts', d.data()])];
+      }
+      stop();
+      await setDoc(doc(db, 'users', u.uid), {familyId: newId, joinCode: code, email: u.email});
+      fid = newId; hint.set(u.uid, fid);
+      for (let i = 0; i < carry.length; i += 400) {
+        const b = writeBatch(db);
+        carry.slice(i, i + 400).forEach(([sub, r]) => b.set(doc(db, 'families', fid, sub, r.id), r));
+        await b.commit();
+      }
+      notify();
+    },
+
     subscribe(h) {
       stop();
       const err = e => h.onError && h.onError(e);
